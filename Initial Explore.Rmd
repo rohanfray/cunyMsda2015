@@ -1,0 +1,13 @@
+---
+title: "Initial Explore"
+output: html_document
+---
+
+```{r}
+library(pander)
+load("/tmp/DT")
+```
+
+```{r}
+pander(sort(table(DT$NPPES_PROVIDER_STATE),decreasing = TRUE))
+```
