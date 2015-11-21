@@ -57,5 +57,7 @@ I will focus on one provider for a moment who has a large difference
 prov <- nyopth.92014[nyopth.92014$npi==1235114026,]
 prov
 ```
+
 According to http://www.city-data.com/zips/10021.html
 This area has a very high cost of living and AGI, so it is not inconceivable that the provider would submit a higher charge.  Thus we should factor in COL or AGI when look at the spread.
+
