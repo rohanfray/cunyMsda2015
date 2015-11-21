@@ -1,0 +1,59 @@
+---
+title: "Exploration2"
+output: pdf_document
+author: "Rohan Fray"
+---
+
+```{r}
+library(plyr)
+```
+
+```{r}
+nyopth <- read.csv("~/cunyMsda2015/nyopth.csv")
+nyopth.92014 <- nyopth[nyopth$hcpcs_code==92014,]
+```
+
+
+The thinking behind the fraud detection is to find some features about the providers on which we can grade them on.  First we will look at the hcpcs code 92014 which stands for "Eye and medical examination for diagnosis and treatment, established patient, 1 or more visits"
+
+```{r}
+length(unique(nyopth.92014$npi))
+```
+
+There are 1401 unique providers.
+
+```{r}
+nyopth.92014.prov.avgmedpayamt <- ddply(nyopth.92014,~npi,summarise,mean=mean(average_medicare_payment_amt))
+plot(nyopth.92014.prov.avgmedpayamt$mean)
+```
+
+Somewhat unsurprisingly, there don't seem to be any gross outliers when it comes to average medicare payment amount
+
+
+
+
+```{r}
+nyopth.92014.prov.avgmedcrgamt <- ddply(nyopth.92014,~npi,summarise,mean=mean(average_submitted_chrg_amt))
+plot(nyopth.92014.prov.avgmedcrgamt$mean)
+```
+
+Also not surprising, The amount that the providers charge (that is the amount they want for the procedure) has outliers
+
+
+I believe one of our features should be the spread between the average medicare payment and the average submitted charged amounts
+
+```{r}
+nyopth.92014.prov.spread <- merge(nyopth.92014.prov.avgmedpayamt,nyopth.92014.prov.avgmedcrgamt,by.x = "npi",by.y = "npi")
+nyopth.92014.prov.spread$diff = nyopth.92014.prov.spread$mean.y - nyopth.92014.prov.spread$mean.x
+plot(nyopth.92014.prov.spread$diff)
+```
+
+There are a good many outliers here.
+
+
+
+I will focus on one provider for a moment who has a large difference
+```{r}
+prov <- nyopth.92014[nyopth.92014$npi==1235114026,]
+prov
+```
