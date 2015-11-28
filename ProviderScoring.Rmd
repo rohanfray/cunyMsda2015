@@ -15,7 +15,9 @@ nyopth <- nyopth[,c(2,8,12,16,17,18,20,21,22,23,24,25,26,27,28,29)]
 
 tophcpcs <- names((sort(table(nyopth$hcpcs_code),decreasing = TRUE))[1:10])
 
-scores<-vector(mode="list",length = length(unique(nyopth$npi)))
+#scores<-vector(mode="list",length = length(unique(nyopth$npi)),x=0)
+scores<-rep(x = 0,times = length(unique(nyopth$npi)))
+
 names(scores) <- unique(nyopth$npi)
 ```
 
@@ -54,6 +56,21 @@ for (i in tophcpcs){
   #depending on the quartile that the npi falls under
   q<-quantile(tmp.spread$diff)
   tmp.spread$sc <- apply(tmp.spread, 1, FUN = scoreFunction,q = q)
+  for (j in 1:nrow(tmp.spread)){
+    scores[as.character(tmp.spread[j,1])] = scores[as.character(tmp.spread[j,1])]+tmp.spread[j,5]
+  }
   
+  #TODO:Need to dispense points based on number of beneficiaries
 }
+```
+
+
+```{r}
+sort(scores,decreasing = TRUE)[1:10]
+```
+
+
+```{r}
+prov <- nyopth[nyopth$npi==1053315416,]
+prov
 ```
