@@ -19,18 +19,41 @@ scores<-vector(mode="list",length = length(unique(nyopth$npi)))
 names(scores) <- unique(nyopth$npi)
 ```
 
+```{r}
+scoreFunction <- function(rowdiff, q){
+  score = 0
+  
+  rowscore = rowdiff[4]
+  if (rowscore>=q[1] && rowscore<q[2]){
+    score = 0
+  }
+  else if (rowscore>=q[2] && rowscore<q[3]){
+    score = 1
+  }
+  else if (rowscore>=q[3] && rowscore<q[4]){
+    score = 2
+  }
+  else{
+    score = 3
+  }
+  score
+}
+```
 
 We loop over all the top hcpcs codes and add to the scores based on the spread of the submitted - payment amount and based on the beneficiaries counts.
-
-
 ```{r}
 for (i in tophcpcs){
   tmp = nyopth[nyopth$hcpcs_code==i,]
   tmp.avgpayment <- ddply(tmp,~npi,summarise,mean=mean(average_medicare_payment_amt))
   tmp.avgsubmitted <- ddply(tmp,~npi,summarise,mean=mean(average_submitted_chrg_amt))
   tmp.spread <- merge(tmp.avgpayment,tmp.avgsubmitted,by.x = "npi",by.y = "npi")
-  #Here is where we would have to discount based on AGI or COL
+  #TODO:Here is where we would have to discount based on AGI or COL  
   tmp.spread$diff = tmp.spread$mean.y - tmp.spread$mean.x
+  
+  #some kind of function that will give out points 
+  #depending on the quartile that the npi falls under
+  q<-quantile(tmp.spread$diff)
+  tmp.spread$sc <- apply(tmp.spread, 1, FUN = scoreFunction,q = q)
   
 }
 ```
