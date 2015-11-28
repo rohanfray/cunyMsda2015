@@ -5,6 +5,10 @@ output: pdf_document
 ---
 
 ```{r}
+library(plyr)
+```
+
+```{r}
 nyopth <- read.csv("~/cunyMsda2015/nyopth.csv")
 
 nyopth <- nyopth[,c(2,8,12,16,17,18,20,21,22,23,24,25,26,27,28,29)]
@@ -20,5 +24,13 @@ We loop over all the top hcpcs codes and add to the scores based on the spread o
 
 
 ```{r}
-
+for (i in tophcpcs){
+  tmp = nyopth[nyopth$hcpcs_code==i,]
+  tmp.avgpayment <- ddply(tmp,~npi,summarise,mean=mean(average_medicare_payment_amt))
+  tmp.avgsubmitted <- ddply(tmp,~npi,summarise,mean=mean(average_submitted_chrg_amt))
+  tmp.spread <- merge(tmp.avgpayment,tmp.avgsubmitted,by.x = "npi",by.y = "npi")
+  #Here is where we would have to discount based on AGI or COL
+  tmp.spread$diff = tmp.spread$mean.y - tmp.spread$mean.x
+  
+}
 ```
