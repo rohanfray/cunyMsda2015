@@ -30,10 +30,12 @@ nyopth <- nyopth[,c(2,8,12,16,17,18,20,21,22,23,24,25,26,27,28,29)]
 
 tophcpcs <- names((sort(table(nyopth$hcpcs_code),decreasing = TRUE))[1:10])
 
-#scores<-vector(mode="list",length = length(unique(nyopth$npi)),x=0)
-scores<-rep(x = 0,times = length(unique(nyopth$npi)))
+spread_scores<-rep(x = 0,times = length(unique(nyopth$npi)))
+names(spread_scores) <- unique(nyopth$npi)
 
-names(scores) <- unique(nyopth$npi)
+bene_scores<-rep(x = 0,times = length(unique(nyopth$npi)))
+names(bene_scores) <- unique(nyopth$npi)
+
 ```
 
 ```{r}
@@ -64,7 +66,7 @@ for (i in tophcpcs){
   tmp.avgpayment <- ddply(tmp,~npi,summarise,mean=mean(average_medicare_payment_amt))
   tmp.avgsubmitted <- ddply(tmp,~npi,summarise,mean=mean(average_submitted_chrg_amt))
   tmp.spread <- merge(tmp.avgpayment,tmp.avgsubmitted,by.x = "npi",by.y = "npi")
-  #TODO:Need to reassess agi index to be >=1
+  #TODO:Need to reassess agi index?
   tmp.spread$diff = tmp.spread$mean.y - tmp.spread$mean.x
 
   t1 = join(x = tmp.spread, y = nyopth.zip, by = "npi")
@@ -78,22 +80,34 @@ for (i in tophcpcs){
   #depending on the quartile that the npi falls under
   q<-quantile(t2$diff2)
   t2$sc <- apply(t2, 1, FUN = scoreFunction,q = q, col = 7)
-  for (j in 1:nrow(tmp.spread)){
-    scores[as.character(t2[j,1])] = scores[as.character(t2[j,1])]+t2[j,8]
+  for (j in 1:nrow(t2)){
+    spread_scores[as.character(t2[j,1])] = spread_scores[as.character(t2[j,1])]+t2[j,8]
   }
   
-  #TODO:Need to dispense points based on number of beneficiaries
+  #Dispense points based on number of beneficiaries
+  tmp.linecnt <- ddply(tmp, ~npi, summarise, sum=sum(line_srvc_cnt))
+  tmp.benecnt <- ddply(tmp, ~npi, summarise, sum=sum(bene_unique_cnt))
+  tmp.cntdiff <- merge(tmp.linecnt,tmp.benecnt,by.x = "npi",by.y = "npi")
+  tmp.cntdiff$diff = tmp.cntdiff$sum.x / tmp.cntdiff$sum.y
   
+  q2 <- quantile(tmp.cntdiff$diff)
+  tmp.cntdiff$sc <- apply(tmp.cntdiff,1,FUN = scoreFunction, q=q2, col = 4)
+  for (j in 1:nrow(tmp.cntdiff)){
+    bene_scores[as.character(tmp.cntdiff[j,1])] = bene_scores[as.character(tmp.cntdiff[j,1])]+tmp.cntdiff[j,5]
+  }
 }
 ```
 
-
 ```{r}
-sort(scores,decreasing = TRUE)[1:10]
+score_spread <- data.frame(keyName=names(spread_scores), value=spread_scores, row.names=NULL)
+score_bene <- data.frame(keyName=names(bene_scores), value=bene_scores, row.names=NULL)
+
+scores <- merge(x=score_spread,y=score_bene, by = "keyName")
+colnames(scores) <- c("npi","score_spread","score_bene")
 ```
 
 
 ```{r}
-prov <- nyopth[nyopth$npi==1053315416,]
+prov <- nyopth[nyopth$npi==1841288388,]
 prov
 ```
