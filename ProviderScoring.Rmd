@@ -108,6 +108,5 @@ colnames(scores) <- c("npi","score_spread","score_bene")
 
 
 ```{r}
-prov <- nyopth[nyopth$npi==1841288388,]
-prov
+summary(scores)
 ```
